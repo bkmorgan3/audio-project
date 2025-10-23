@@ -1,5 +1,5 @@
 export default async function LandingPage() {
     return (
-        <div>Page Content</div>
+        <div>Welcome to a page that is going to do something</div>
     )
 }
