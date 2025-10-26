@@ -21,7 +21,6 @@ export default function AudioPlayer() {
     }
 
     const playAudio = async () => {
-        console.log('FUCK YEAAH')
         if(!audioFile) return
 
         const audioContext = initializeAudioContext()
@@ -47,7 +46,7 @@ export default function AudioPlayer() {
         <div>
            <input type="file" accept="audio/*" onChange={handleFileChange} />
            {audioFile && (
-            <button onClick={playAudio}>Fuck off</button>
+            <button onClick={playAudio}>Play</button>
            )}
         </div>
     )
