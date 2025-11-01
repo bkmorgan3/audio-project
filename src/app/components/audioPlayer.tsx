@@ -34,8 +34,13 @@ export const AudioPlayer = () => {
     }
     return <section>
         <div className="border border-red-600 flex flex-col" >
-            <label htmlFor="file">Upload a song</label>
+            <label className="cursor-pointer" htmlFor="file">Upload a song</label>
             <input onChange={handleFile} className="hidden" type="file" id="file" accept="audio/*" />
+            {audioBuffer && (
+                <p className="mt-2 text-sm text-green-600">
+                    Loaded {audioBuffer.duration.toFixed(2)} seconds of audio
+                </p>
+            )}
         </div>
     </section>
 }
