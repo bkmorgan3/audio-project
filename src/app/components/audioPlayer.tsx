@@ -1,29 +1,36 @@
 "use client"
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export const AudioPlayer = () => {
     const [audioBuffer, setAudioBuffer] = useState<AudioBuffer | null>(null)
-    const audioContextRef = useRef(new AudioContext())
+    const audioContextRef = useRef<AudioContext | null>(null)
     console.log('a', audioBuffer)
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            audioContextRef.current = new AudioContext()
+        }
+    },[])
 
     const handleFile = (event: React.ChangeEvent<HTMLInputElement> ) => {
         const track = event.target.files?.[0];
-        if (track) {
-            const reader = new FileReader();
-            reader.onload = async e => {
-                if (e.target?.result instanceof ArrayBuffer) {
-                    try {
-                        const buffer = await audioContextRef.current.decodeAudioData(e.target.result)
-                        setAudioBuffer(buffer)
-                    } catch(err) {
-                        console.error('Error decoding audio', err)
-                    }
-                }
-                
-           }
-           reader.readAsArrayBuffer(track)
+        if (!track || !audioContextRef.current) return
+
+        const reader = new FileReader()
+        reader.onload = async e => {
+            const arrayBuffer = e.target?.result
+            if (!(arrayBuffer instanceof ArrayBuffer)) return
+
+            try {
+                const ctx = audioContextRef.current!;
+                const decoded = await ctx.decodeAudioData(arrayBuffer)
+                setAudioBuffer(decoded)
+            } catch (err) {
+                console.error("error decoding audio", err)
+            }
         }
+        reader.readAsArrayBuffer(track) 
     }
     return <section>
         <div className="border border-red-600 flex flex-col" >
