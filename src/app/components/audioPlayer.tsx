@@ -1,53 +1,34 @@
 "use client"
 
-import React, { useState, useRef, useEffect } from 'react'
+import { useRef, useState } from "react";
 
+export const AudioPlayer = () => {
+    const [audioBuffer, setAudioBuffer] = useState<AudioBuffer | null>(null)
+    const audioContextRef = useRef(new AudioContext())
+    console.log('a', audioBuffer)
 
-export default function AudioPlayer() {
-    const [audioFile, setAudioFile] = useState<File | null>(null)
-    const audioContextRef = useRef<AudioContext | null>(null)
-
-    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        if(event.target.files && event.target.files.length > 0) {
-            setAudioFile(event.target.files[0])
-        }
-    }
-
-    const initializeAudioContext = () => {
-        if(!audioContextRef.current) {
-            audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)()
-        }
-        return audioContextRef.current
-    }
-
-    const playAudio = async () => {
-        if(!audioFile) return
-
-        const audioContext = initializeAudioContext()
-        const reader = new FileReader()
-
-        reader.onload = async (e) => {
-            if(e.target?.result instanceof ArrayBuffer) {
-                try {
-                    const audioBuffer = await audioContext.decodeAudioData(e.target.result)
-                    const source = audioContext.createBufferSource()
-                    source.buffer = audioBuffer
-                    source.connect(audioContext.destination)
-                    source.start(0)
-                } catch(e) {
-                    console.error('error decoding audio data', e)
+    const handleFile = (event: React.ChangeEvent<HTMLInputElement> ) => {
+        const track = event.target.files?.[0];
+        if (track) {
+            const reader = new FileReader();
+            reader.onload = async e => {
+                if (e.target?.result instanceof ArrayBuffer) {
+                    try {
+                        const buffer = await audioContextRef.current.decodeAudioData(e.target.result)
+                        setAudioBuffer(buffer)
+                    } catch(err) {
+                        console.error('Error decoding audio', err)
+                    }
                 }
-            }
+                
+           }
+           reader.readAsArrayBuffer(track)
         }
-        reader.readAsArrayBuffer(audioFile)
     }
-
-    return (
-        <div>
-           <input type="file" accept="audio/*" onChange={handleFileChange} />
-           {audioFile && (
-            <button onClick={playAudio}>Play</button>
-           )}
+    return <section>
+        <div className="border border-red-600 flex flex-col" >
+            <label htmlFor="file">Upload a song</label>
+            <input onChange={handleFile} className="hidden" type="file" id="file" accept="audio/*" />
         </div>
-    )
+    </section>
 }
