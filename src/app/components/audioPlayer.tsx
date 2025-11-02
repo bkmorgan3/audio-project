@@ -30,6 +30,7 @@ export const AudioPlayer = () => {
                 const ctx = audioContextRef.current!;
                 const decoded = await ctx.decodeAudioData(arrayBuffer)
                 setAudioBuffer(decoded)
+                drawWaveform(decoded)
             } catch (err) {
                 console.error("error decoding audio", err)
             }
@@ -43,67 +44,52 @@ export const AudioPlayer = () => {
 
         if (isPlaying) {
             sourceRef.current?.stop()
-            cancelAnimationFrame(animationRef.current!)
             setIsPlaying(false)
         } else {
             const source = ctx.createBufferSource()
-            const analyser = ctx.createAnalyser()
-
             source.buffer = audioBuffer;
-            source.connect(analyser)
-            analyser.connect(ctx.destination)
-
-            analyser.fftSize = 2048;
-            analyserRef.current = analyser
+            source.connect(ctx.destination)
             sourceRef.current = source
-
             source.start()
             setIsPlaying(true)
-
-            // 
-            drawVisualizer()
             source.onended = () => {
                 setIsPlaying(false)
-                cancelAnimationFrame(animationRef.current!)
             }
         }
     }
 
-    const drawVisualizer = () => {
-      const canvas = canvasRef.current
-      const analyser = analyserRef.current
-      if(!canvas || !analyser) return
-
+    const drawWaveform = (buffer: AudioBuffer) => {
+      const canvas = canvasRef.current 
+      if (!canvas) return 
       const ctx = canvas.getContext('2d')
-      const bufferLength = analyser.fftSize
-      const dataArray = new Uint8Array(bufferLength)
+      if (!ctx) return 
 
-      const draw = () => {
-        analyser.getByteTimeDomainData(dataArray)
-        ctx!.fillStyle = '#111'
-        ctx!.fillRect(0,0,canvas.width, canvas.height)
+      const { width, height } = canvas
+      ctx.clearRect(0, 0, width, height)
 
-        ctx!.lineWidth = 2
-        ctx!.strokeStyle = '#00ff88'
-        ctx!.beginPath()
-        const sliceWidth = canvas.width / bufferLength
-        let x = 0
+      ctx.fillStyle = '#111'
+      ctx.fillRect(0, 0, width, height)
 
-        for (let i = 0; i < bufferLength; i++) {
-            const v = dataArray[i] / 128.0
-            const y = (v * canvas.height) / 2
+      const channelData = buffer.getChannelData(0)
+      const step = Math.ceil(channelData.length / width)
+      const amp = height / 2
 
-            if (i === 0) ctx!.moveTo(x,y)
-            else ctx!.lineTo(x,y)
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = '#00ff88'
+      ctx.beginPath()
 
-            x += sliceWidth
+      for (let i = 0; i < width; i++) {
+        let min = 1.0
+        let max = -1.0
+        for (let j = 0; j < step; j++) {
+            const datum = channelData[i * step + j]
+            if (datum < min) min = datum 
+            if (datum > max) max = datum
         }
-        ctx!.lineTo(canvas.width, canvas.height / 2)
-        ctx!.stroke()
-
-        animationRef.current = requestAnimationFrame(draw)
+        ctx.moveTo(i, (1 + min) * amp)
+        ctx.lineTo(i, (1 + max) * amp)
       }
-      draw()
+      ctx.stroke()
     }
     return <section>
         <div className="border border-red-600 flex flex-col" >
