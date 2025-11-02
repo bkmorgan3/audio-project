@@ -5,7 +5,10 @@ import { useEffect, useRef, useState } from "react";
 export const AudioPlayer = () => {
     const [audioBuffer, setAudioBuffer] = useState<AudioBuffer | null>(null)
     const audioContextRef = useRef<AudioContext | null>(null)
-    console.log('a', audioBuffer)
+    const analyserRef = useRef<AnalyserNode | null>(null)
+    const [isPlaying, setIsPlaying] = useState(false)
+    const sourceRef = useRef<AudioBufferSourceNode | null>(null)
+    const animationRef = useRef<number | null>(null)
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -32,14 +35,50 @@ export const AudioPlayer = () => {
         }
         reader.readAsArrayBuffer(track) 
     }
+
+    const togglePlay = () => {
+        const ctx = audioContextRef.current
+        if (!ctx || !audioBuffer) return
+
+        if (isPlaying) {
+            sourceRef.current?.stop()
+            cancelAnimationFrame(animationRef.current!)
+            setIsPlaying(false)
+        } else {
+            const source = ctx.createBufferSource()
+            const analyser = ctx.createAnalyser()
+
+            source.buffer = audioBuffer;
+            source.connect(analyser)
+            analyser.connect(ctx.destination)
+
+            analyser.fftSize = 2048;
+            analyserRef.current = analyser
+            sourceRef.current = source
+
+            source.start()
+            setIsPlaying(true)
+
+            // 
+            drawVisualizer()
+            source.onended = () => {
+                setIsPlaying(false)
+                cancelAnimationFrame(animationRef.current!)
+            }
+        }
+    }
+
+    const drawVisualizer = () => {
+        console.log("drawing data here")
+    }
     return <section>
         <div className="border border-red-600 flex flex-col" >
             <label className="cursor-pointer" htmlFor="file">Upload a song</label>
             <input onChange={handleFile} className="hidden" type="file" id="file" accept="audio/*" />
             {audioBuffer && (
-                <p className="mt-2 text-sm text-green-600">
-                    Loaded {audioBuffer.duration.toFixed(2)} seconds of audio
-                </p>
+                <button onClick={togglePlay} className="mt-2 border border-green-500 rounded px-4 py-1">
+                    {isPlaying ? "Stop iiiit" : "Play"}
+                </button>
             )}
         </div>
     </section>
