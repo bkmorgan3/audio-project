@@ -54,13 +54,16 @@ export const AudioPlayer: React.FC = () => {
       const canvas = canvasRef.current;
       const container = containerRef.current;
       if (!canvas || !container) return;
+
       const dpr = window.devicePixelRatio || 1;
       const w = Math.floor(container.clientWidth);
       const h = Math.floor(200); // static height; you can make this prop
+
       canvas.width = w * dpr;
       canvas.height = h * dpr;
       canvas.style.width = `${w}px`;
       canvas.style.height = `${h}px`;
+
       const ctx = canvas.getContext("2d");
       if (ctx) ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
@@ -68,10 +71,13 @@ export const AudioPlayer: React.FC = () => {
       if (offscreenRef.current) {
         offscreenRef.current.width = canvas.width;
         offscreenRef.current.height = canvas.height;
+
         const offCtx = offscreenRef.current.getContext("2d");
-        if (offCtx) offCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        // if we already have a buffer, re-draw waveform into offscreen at new size
-        if (audioBuffer) drawWaveformToOffscreen(audioBuffer, offCtx, canvas.width / dpr, canvas.height / dpr);
+
+        if (offCtx && audioBuffer) {
+            offCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            drawWaveformToOffscreen(audioBuffer, offCtx, canvas.width / dpr, canvas.height / dpr);
+        }
       }
     };
 
