@@ -24,12 +24,20 @@ export const AudioPlayer: React.FC = () => {
   const animationRef = useRef<number | null>(null);
   const isSeekingRef = useRef(false); // dragging flag
 
+  function getAudioContext() {
+    if (typeof window === 'undefined') return null 
+
+    const Ctx = window.AudioContext || (window as { webkitAudioContext?: typeof AudioContext}).webkitAudioContext 
+
+    return Ctx ? new Ctx() : null
+  }
+
+
+
+
   // Initialize audio context once
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (!audioContextRef.current) {
-      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-    }
+      audioContextRef.current = getAudioContext()
     // cleanup on unmount
     return () => {
       animationRef.current && cancelAnimationFrame(animationRef.current);
