@@ -15,7 +15,7 @@ export default async function AudioLayout({children}: {children: React.ReactNode
                 </div>
             </header> */}
             <main>{children}</main>
-            <footer>footer</footer>
+            
         </div>
     )
 }
